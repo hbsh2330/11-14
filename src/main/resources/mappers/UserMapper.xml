@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.yhp.studybbs.mappers.UserMapper">
+    <insert id="insertEmailAuth"
+            parameterType="com.yhp.studybbs.entities.EmailAuthEntity">
+        INSERT INTO `study_bbs`.`email_auths` (`email`, `code`, `salt`, `verified_flag`, `created_at`, `expires_at`)
+        VALUES (#{email},
+                #{code},
+                #{salt},
+                #{isVerified},
+                #{createdAt},
+                #{expiresAt})
+    </insert>
+
+    <insert id="insertUser"
+            parameterType="com.yhp.studybbs.entities.UserEntity">
+        INSERT INTO `study_bbs`.`users` (`email`, `password`, `nickname`, `name`, `contact_company_code`, `contact_first`, `contact_second`, `contact_third`, `address_postal`, `address_primary`, `address_secondary`, `admin_flag`, `deleted_flag`, `suspended_flag`, `registered_at`, `term_policy_at`, `term_privacy_at`, `term_marketing_at`)
+        VALUES (#{email}, #{password}, #{nickname}, #{name}, #{contactCompanyCode}, #{contactFirst}, #{contactSecond}, #{contactThird}, #{addressPostal}, #{addressPrimary}, #{addressSecondary}, #{isAdmin}, #{isDeleted}, #{isSuspended}, #{registeredAt}, #{termPolicyAt}, #{termPrivacyAt}, #{termMarketingAt})
+    </insert>
+
+    <select id="selectContactCompanies"
+            resultType="com.yhp.studybbs.entities.ContactCompanyEntity">
+        SELECT `code` AS `code`,
+               `text` AS `text`
+        FROM `study_bbs`.`contact_companies`
+        ORDER BY `code`
+    </select>
+
+    <select id="selectEmailAuthByEmailCodeSalt"
+            resultType="com.yhp.studybbs.entities.EmailAuthEntity">
+        SELECT `email`         AS `email`,
+               `code`          AS `code`,
+               `salt`          AS `salt`,
+               `verified_flag` AS `isVerified`,
+               `created_at`    AS `createdAt`,
+               `expires_at`    AS `expiresAt`
+        FROM `study_bbs`.`email_auths`
+        WHERE BINARY `email` = #{email}
+          AND BINARY `code` = #{code}
+          AND BINARY `salt` = #{salt}
+        LIMIT 1
+    </select>
+
+    <select id="selectUserByContact"
+            resultType="com.yhp.studybbs.entities.UserEntity">
+        SELECT `email`                AS `email`,
+               `password`             AS `password`,
+               `nickname`             AS `nickname`,
+               `name`                 AS `name`,
+               `contact_company_code` AS `contactCompanyCode`,
+               `contact_first`        AS `contactFirst`,
+               `contact_second`       AS `contactSecond`,
+               `contact_third`        AS `contactThird`,
+               `address_postal`       AS `addressPostal`,
+               `address_primary`      AS `addressPrimary`,
+               `address_secondary`    AS `addressSecondary`,
+               `admin_flag`           AS `isAdmin`,
+               `deleted_flag`         AS `isDeleted`,
+               `suspended_flag`       AS `isSuspended`,
+               `registered_at`        AS `registeredAt`,
+               `term_policy_at`       AS `termPolicyAt`,
+               `term_privacy_at`      AS `termPrivacyAt`,
+               `term_marketing_at`    AS `termMarketingAt`
+        FROM `study_bbs`.`users`
+        WHERE BINARY `contact_first` = #{contactFirst}
+          AND BINARY `contact_second` = #{contactSecond}
+          AND BINARY `contact_third` = #{contactThird}
+        LIMIT 1
+    </select>
+
+    <select id="selectUserByEmail"
+            resultType="com.yhp.studybbs.entities.UserEntity">
+        SELECT `email`                AS `email`,
+               `password`             AS `password`,
+               `nickname`             AS `nickname`,
+               `name`                 AS `name`,
+               `contact_company_code` AS `contactCompanyCode`,
+               `contact_first`        AS `contactFirst`,
+               `contact_second`       AS `contactSecond`,
+               `contact_third`        AS `contactThird`,
+               `address_postal`       AS `addressPostal`,
+               `address_primary`      AS `addressPrimary`,
+               `address_secondary`    AS `addressSecondary`,
+               `admin_flag`           AS `isAdmin`,
+               `deleted_flag`         AS `isDeleted`,
+               `suspended_flag`       AS `isSuspended`,
+               `registered_at`        AS `registeredAt`,
+               `term_policy_at`       AS `termPolicyAt`,
+               `term_privacy_at`      AS `termPrivacyAt`,
+               `term_marketing_at`    AS `termMarketingAt`
+        FROM `study_bbs`.`users`
+        WHERE BINARY `email` = #{email}
+        LIMIT 1
+    </select>
+
+    <select id="selectUserByNickname"
+            resultType="com.yhp.studybbs.entities.UserEntity">
+        SELECT `email`                AS `email`,
+               `password`             AS `password`,
+               `nickname`             AS `nickname`,
+               `name`                 AS `name`,
+               `contact_company_code` AS `contactCompanyCode`,
+               `contact_first`        AS `contactFirst`,
+               `contact_second`       AS `contactSecond`,
+               `contact_third`        AS `contactThird`,
+               `address_postal`       AS `addressPostal`,
+               `address_primary`      AS `addressPrimary`,
+               `address_secondary`    AS `addressSecondary`,
+               `admin_flag`           AS `isAdmin`,
+               `deleted_flag`         AS `isDeleted`,
+               `suspended_flag`       AS `isSuspended`,
+               `registered_at`        AS `registeredAt`,
+               `term_policy_at`       AS `termPolicyAt`,
+               `term_privacy_at`      AS `termPrivacyAt`,
+               `term_marketing_at`    AS `termMarketingAt`
+        FROM `study_bbs`.`users`
+        WHERE BINARY `nickname` = #{nickname}
+        LIMIT 1
+    </select>
+
+    <update id="updateEmailAuth"
+            parameterType="com.yhp.studybbs.entities.EmailAuthEntity">
+        UPDATE `study_bbs`.`email_auths`
+        SET `verified_flag` = #{isVerified},
+            `created_at`    = #{createdAt},
+            `expires_at`    = #{expiresAt}
+        WHERE BINARY `email` = #{email}
+          AND BINARY `code` = #{code}
+          AND BINARY `salt` = #{salt}
+        LIMIT 1
+    </update>
+
+    <update id="updatePassword" parameterType="com.yhp.studybbs.entities.UserEntity">
+        UPDATE `study_bbs`.`users`
+        SET `password` = #{password}
+        WHERE BINARY `email` = #{email}
+        LIMIT 1
+    </update>
+
+</mapper>
+
+
+
+
+
+
+
+
+
+
+
