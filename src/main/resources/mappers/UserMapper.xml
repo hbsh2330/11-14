@@ -130,9 +130,26 @@
         LIMIT 1
     </update>
 
-    <update id="updatePassword" parameterType="com.yhp.studybbs.entities.UserEntity">
+    <update id="updateUser" parameterType="com.yhp.studybbs.entities.UserEntity">
         UPDATE `study_bbs`.`users`
-        SET `password` = #{password}
+        SET `password`             = #{password},
+            `nickname`             = #{nickname},
+            `name`                 = #{name},
+            `contact_company_code` = #{contactCompanyCode},
+            `contact_first`        = #{contactFirst},
+            `contact_second`       = #{contactSecond},
+            `contact_third`        = #{contactThird},
+            `address_postal`       = #{addressPostal},
+            `address_primary`      = #{addressPrimary},
+            `address_secondary`    = #{addressSecondary},
+            `admin_flag`           = #{isAdmin},
+            `deleted_flag`         = #{isDeleted},
+            `suspended_flag`       = #{isSuspended},
+            `registered_at`        = #{registeredAt},
+            `term_policy_at`       = #{termPolicyAt},
+            `term_privacy_at`      = #{termPrivacyAt},
+            `term_marketing_at`    = #{termMarketingAt}
+
         WHERE BINARY `email` = #{email}
         LIMIT 1
     </update>

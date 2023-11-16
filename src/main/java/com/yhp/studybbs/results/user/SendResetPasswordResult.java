@@ -1,7 +1,6 @@
 package com.yhp.studybbs.results.user;
 
-public enum ResetPasswordResult {
+public enum SendResetPasswordResult {
     FAILURE,
-    FAILURE_NON_EMAIL,
     SUCCESS
 }

@@ -52,7 +52,7 @@ mainForm['infoEmailSend'].onclick = function () {
         loading.hide();
         if (xhr.status >= 200 && xhr.status < 300) {
             const responseObject = JSON.parse(xhr.responseText);
-            switch (responseObject['result']) {
+            switch (responseObject['result']) { //controller로 부터 받은 result의 값을 출력
                 case 'failure':
                     dialog.show({
                         title: '오류',
@@ -74,7 +74,7 @@ mainForm['infoEmailSend'].onclick = function () {
                     });
                     break;
                 case 'success':
-                    mainForm['infoEmailSalt'].value = responseObject['salt'];
+                    mainForm['infoEmailSalt'].value = responseObject['salt']; //infoEmailSalt의 값에 responseObject로 받은 salt를 대입한다.
                     mainForm['infoEmail'].setAttribute('disabled', '');
                     mainForm['infoEmailSend'].setAttribute('disabled', '');
                     mainForm['infoEmailCode'].removeAttribute('disabled');
@@ -327,6 +327,7 @@ mainForm.onsubmit = function (e) {
                     })]
                 });
                 return;
+
             }
             if (mainForm['infoNickname'].value === '') {
                 dialog.show({

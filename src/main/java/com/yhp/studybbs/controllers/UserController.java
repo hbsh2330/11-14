@@ -149,17 +149,28 @@ public class UserController {
         return modelAndView;
     }
 
-    @RequestMapping(value = "resetPassword",
+    @RequestMapping(value = "resetPasswordEmail",
             method = RequestMethod.POST,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String postResetPassword(EmailAuthEntity emailAuth) throws MessagingException {
-        ResetPasswordResult result = this.userService.resetPasswordResult(emailAuth);
+    public String postResetPasswordEmail(EmailAuthEntity emailAuth) throws MessagingException {
+        SendResetPasswordEmailResult result = this.userService.sendResetPasswordEmail(emailAuth);
         JSONObject responseObject = new JSONObject();
         responseObject.put("result", result.name().toLowerCase());
-        if (result == ResetPasswordResult.SUCCESS) {
-            responseObject.put("salt", emailAuth.getSalt());
+        if (result == SendResetPasswordEmailResult.SUCCESS) {
+            responseObject.put("salt", emailAuth.getSalt()); //자바스크립트의 salt부분과 맞아야함
         }
+        return responseObject.toString();
+    }
+
+    @RequestMapping(value = "resetPasswordEmail",
+            method = RequestMethod.PATCH,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseBody
+    public String patchResetPasswordEmail(EmailAuthEntity emailAuth) {
+        VerifyRegisterEmailResult result = this.userService.verifyRegisterEmail(emailAuth);
+        JSONObject responseObject = new JSONObject();
+        responseObject.put("result", result.name().toLowerCase());
         return responseObject.toString();
     }
 
@@ -167,8 +178,8 @@ public class UserController {
             method = RequestMethod.PATCH,
             produces = MediaType.APPLICATION_JSON_VALUE)
     @ResponseBody
-    public String patchResetPassword(EmailAuthEntity emailAuth) {
-        VerifyRegisterEmailResult result = this.userService.verifyRegisterEmail(emailAuth);
+    public String patchResetPassword(UserEntity user){
+        SendResetPasswordResult result= this.userService.sendResetPassword(user);
         JSONObject responseObject = new JSONObject();
         responseObject.put("result", result.name().toLowerCase());
         return responseObject.toString();

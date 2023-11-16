@@ -3,6 +3,7 @@ package com.yhp.studybbs.services;
 import com.yhp.studybbs.entities.ContactCompanyEntity;
 import com.yhp.studybbs.entities.EmailAuthEntity;
 import com.yhp.studybbs.entities.UserEntity;
+import com.yhp.studybbs.factories.MailFactory;
 import com.yhp.studybbs.mappers.UserMapper;
 import com.yhp.studybbs.regexes.EmailAuthRegex;
 import com.yhp.studybbs.regexes.UserRegex;
@@ -24,6 +25,23 @@ import java.util.Date;
 
 @Service
 public class UserService {
+
+    private static void randomize(EmailAuthEntity emailAuth) {
+        UserService.randomize(emailAuth, 5);
+    }
+
+    private static void randomize(EmailAuthEntity emailAuth, int expDuration) {
+        emailAuth.setCode(RandomStringUtils.randomNumeric(6));
+        emailAuth.setSalt(CryptoUtil.hashSha512(String.format("%s%s%f%f",
+                emailAuth.getEmail(),
+                emailAuth.getCode(),
+                Math.random(),
+                Math.random())));
+        emailAuth.setVerified(false);
+        emailAuth.setCreatedAt(new Date());
+        emailAuth.setExpiresAt(DateUtils.addMinutes(emailAuth.getCreatedAt(), expDuration));
+    }
+
     private static ContactCompanyEntity[] contactCompanies;
 
     private final UserMapper userMapper;
@@ -82,16 +100,6 @@ public class UserService {
         user.setEmail(dbUser.getEmail());
         return RecoverEmailResult.SUCCESS;
     }
-//    public ResetPasswordResult resetPassword(UserEntity user) {
-//        if (!UserRegex.PASSWORD.matches(user.getPassword())){
-//            return ResetPasswordResult.FAILURE;
-//        }
-//        UserEntity dbUser = this.userMapper.updatePassword(
-//                user.getEmail());
-//        if (dbUser == null){
-//            return ResetPasswordResult.FAILURE;
-//        }
-//    }
 
     public RegisterResult register(UserEntity user, EmailAuthEntity emailAuth, boolean termMarketingAgreed) {
         if (!UserRegex.EMAIL.matches(user.getEmail()) ||
@@ -150,29 +158,17 @@ public class UserService {
             return SendRegisterEmailResult.FAILURE;
         }
         if (this.userMapper.selectUserByEmail(emailAuth.getEmail()) != null) {
-            return SendRegisterEmailResult.FAILURE_DUPLICATE_EMAIL;
+            return SendRegisterEmailResult.FAILURE_DUPLICATE_EMAIL; // 이미 가입된 이용자
         }
-        emailAuth.setCode(RandomStringUtils.randomNumeric(6));
-        emailAuth.setSalt(CryptoUtil.hashSha512(String.format("%s%s%f%f",
-                emailAuth.getEmail(),
-                emailAuth.getCode(),
-                Math.random(),
-                Math.random())));
-        emailAuth.setVerified(false);
-        emailAuth.setCreatedAt(new Date());
-        emailAuth.setExpiresAt(DateUtils.addMinutes(emailAuth.getCreatedAt(), 5));
+        UserService.randomize(emailAuth); // 인증번호 6자
 
-        Context context = new Context();
-        context.setVariable("emailAuth", emailAuth);
-        String textHtml = this.templateEngine.process("user/registerEmail", context);
-        MimeMessage message = this.mailSender.createMimeMessage();
-        MimeMessageHelper messageHelper = new MimeMessageHelper(message, false);
-        messageHelper.setTo(emailAuth.getEmail());
-        messageHelper.setSubject("[BBS] 회원가입 인증번호");
-        messageHelper.setText(textHtml, true);
-        this.mailSender.send(message);
-
-        return this.userMapper.insertEmailAuth(emailAuth) > 0
+        new MailFactory(this.mailSender, this.templateEngine)
+                .setContextVariable("emailAuth", emailAuth) //MailFactory
+                .setTemplate("user/registerEmail")
+                .setTo(emailAuth.getEmail())
+                .setSubject("[BBS] 회원가입 인증번호")
+                .send(); //회원 인증번호 메일로 보내는 Factory형식의 코드
+        return this.userMapper.insertEmailAuth(emailAuth) > 0 //
                 ? SendRegisterEmailResult.SUCCESS
                 : SendRegisterEmailResult.FAILURE;
     }
@@ -198,39 +194,41 @@ public class UserService {
                 ? VerifyRegisterEmailResult.SUCCESS
                 : VerifyRegisterEmailResult.FAILURE;
     }
-    public ResetPasswordResult resetPasswordResult(EmailAuthEntity emailAuth) throws MessagingException {
-        if (!UserRegex.EMAIL.matches(emailAuth.getEmail())) {
-            return ResetPasswordResult.FAILURE;
-        }
-        if (this.userMapper.selectUserByEmail(emailAuth.getEmail()) == null) {
-            return ResetPasswordResult.FAILURE_NON_EMAIL;
-        }
-        emailAuth.setCode(RandomStringUtils.randomNumeric(6));
-        emailAuth.setSalt(CryptoUtil.hashSha512(String.format("%s%s%f%f",
-                emailAuth.getEmail(),
-                emailAuth.getCode(),
-                Math.random(),
-                Math.random())));
-        emailAuth.setVerified(false);
-        emailAuth.setCreatedAt(new Date());
-        emailAuth.setExpiresAt(DateUtils.addMinutes(emailAuth.getCreatedAt(), 5));
 
-        Context context = new Context();
-        context.setVariable("emailAuth", emailAuth);
-        String textHtml = this.templateEngine.process("user/registerEmail", context);
-        MimeMessage message = this.mailSender.createMimeMessage();
-        MimeMessageHelper messageHelper = new MimeMessageHelper(message, false);
-        messageHelper.setTo(emailAuth.getEmail());
-        messageHelper.setSubject("[BBS] 회원가입 인증번호");
-        messageHelper.setText(textHtml, true);
-        this.mailSender.send(message);
+    public SendResetPasswordEmailResult sendResetPasswordEmail(EmailAuthEntity emailAuth) throws MessagingException {
+        if (!EmailAuthRegex.EMAIL.matches(emailAuth.getEmail())) {
+            return SendResetPasswordEmailResult.FAILURE;
+        }
+        if (this.userMapper.selectUserByEmail(emailAuth.getEmail()) == null) { //db에서 준 이메일이 없다면
+            return SendResetPasswordEmailResult.FAILURE_NON_EMAIL;
+        }
+        UserService.randomize(emailAuth);
 
+        new MailFactory(this.mailSender, this.templateEngine)
+                .setContextVariable("emailAuth", emailAuth) //MailFactory
+                .setTemplate("user/resetPasswordEmail")
+                .setTo(emailAuth.getEmail())
+                .setSubject("[BBS] 비밀번호 재설정 인증번호")
+                .send();
         return this.userMapper.insertEmailAuth(emailAuth) > 0
-                ? ResetPasswordResult.SUCCESS
-                : ResetPasswordResult.FAILURE;
+                ? SendResetPasswordEmailResult.SUCCESS
+                : SendResetPasswordEmailResult.FAILURE;
     }
 
+    public SendResetPasswordResult sendResetPassword(UserEntity user) {
+        if (!UserRegex.PASSWORD.matches(user.getPassword())){
+            return SendResetPasswordResult.FAILURE;
+        }
+        UserEntity dbUser = this.userMapper.selectUserByEmail(user.getEmail());
+        dbUser.setPassword(CryptoUtil.hashSha512(user.getPassword()));
+        return this.userMapper.updateUser(dbUser) > 0
+                ? SendResetPasswordResult.SUCCESS
+                : SendResetPasswordResult.FAILURE;
+    }
 }
+
+
+
 
 
 
